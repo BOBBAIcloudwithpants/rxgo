@@ -1,11 +1,9 @@
-package rxgo_test
+package rxgo
 
 import (
 	"fmt"
 	"testing"
 	"time"
-
-	"github.com/pmlpml/rxgo"
 )
 
 type observer struct {
@@ -24,18 +22,18 @@ func (o observer) OnCompleted() {
 	fmt.Println(o.name, "Down ")
 }
 
-func TestMain(t *testing.T) {
+func TestMain(m *testing.M) {
 
 	// test Subscribe on any
-	ob := rxgo.Just(10, 20, 30).Map(dd)
-	ob1 := ob.Map(dd).SubscribeOn(rxgo.ThreadingIO).Debug(true).Map(dd)
+	ob := Just(10, 20, 30).Map(dd)
+	ob1 := ob.Map(dd).SubscribeOn(ThreadingIO).Debug(true).Map(dd)
 	ob1.Subscribe(func(x int) {
 		fmt.Println("Just", x)
 	})
 
-	ob = rxgo.Just(0, 12, 7, 34, 2).Filter(func(x int) bool {
+	ob = Just(0, 12, 7, 34, 2).Filter(func(x int) bool {
 		return x < 10
-	}).SubscribeOn(rxgo.ThreadingIO)
+	}).SubscribeOn(ThreadingIO)
 	ob.Subscribe(
 		func(x int) {
 			fmt.Println("Filter", x)
@@ -45,12 +43,12 @@ func TestMain(t *testing.T) {
 func dd(x int) int { return 2 * x }
 
 func TestObserver(t *testing.T) {
-	var s rxgo.Observer = observer{"test observer"}
-	rxgo.Just(1, 2, 3).Subscribe(s)
+	var s Observer = observer{"test observer"}
+	Just(1, 2, 3).Subscribe(s)
 }
 
 func TestTreading(t *testing.T) {
-	flow := rxgo.Just(10, 20, 30).Map(func(x int) int {
+	flow := Just(10, 20, 30).Map(func(x int) int {
 		return x + 1
 	})
 	/* 	.FlatMap(func(x int) *rxgo.Observable {

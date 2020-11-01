@@ -1,4 +1,4 @@
-package rxgo_test
+package rxgo
 
 import (
 	"context"
@@ -7,13 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pmlpml/rxgo"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRange(t *testing.T) {
 	res := []int{}
-	rxgo.Range(0, 5).Subscribe(func(x int) {
+	Range(0, 5).Subscribe(func(x int) {
 		res = append(res, x)
 	})
 
@@ -23,7 +22,7 @@ func TestRange(t *testing.T) {
 func TestRangeWithCancel(t *testing.T) {
 
 	res := []int{}
-	var oberver = rxgo.ObserverMonitor{}
+	var oberver = ObserverMonitor{}
 	oberver.Next = func(y interface{}) {
 		x := y.(int)
 		res = append(res, x)
@@ -39,7 +38,7 @@ func TestRangeWithCancel(t *testing.T) {
 		return ctx
 	}
 
-	rxgo.Range(0, 10).Subscribe(oberver)
+	Range(0, 10).Subscribe(oberver)
 	assert.False(t, len(res) > 5, "Range cancel failure!")
 	//fmt.Println(res)
 }
@@ -52,7 +51,7 @@ func TestStart(t *testing.T) {
 			if i < end-1 {
 				i++
 				if i == 3 {
-					panic(rxgo.FlowableError{Err: errors.New("any"), Elements: nil})
+					panic(FlowableError{Err: errors.New("any"), Elements: nil})
 				}
 				return i, false
 			}
@@ -61,7 +60,7 @@ func TestStart(t *testing.T) {
 	}
 
 	res := []int64{}
-	rxgo.Start(rangex(1, 5)).Subscribe(
+	Start(rangex(1, 5)).Subscribe(
 		func(x int64) {
 			res = append(res, x)
 		})
@@ -76,7 +75,7 @@ func TestAnySouce(t *testing.T) {
 		send(20)
 		send(30)
 	}
-	rxgo.Generator(source).Subscribe(
+	Generator(source).Subscribe(
 		func(x int) {
 			res = append(res, x)
 		})
@@ -86,7 +85,7 @@ func TestAnySouce(t *testing.T) {
 
 func TestJust(t *testing.T) {
 	res := []int{}
-	rxgo.Just(10, 20, 30).Subscribe(
+	Just(10, 20, 30).Subscribe(
 		func(x int) {
 			res = append(res, x)
 		})
@@ -96,7 +95,7 @@ func TestJust(t *testing.T) {
 
 func TestFromSlice(t *testing.T) {
 	res := []int{}
-	rxgo.From([]int{10, 20, 30}).Subscribe(
+	From([]int{10, 20, 30}).Subscribe(
 		func(x int) {
 			res = append(res, x)
 		})
@@ -114,7 +113,7 @@ func TestFromChan(t *testing.T) {
 	}()
 
 	res := []int{}
-	rxgo.From(ch).Subscribe(
+	From(ch).Subscribe(
 		func(x int) {
 			res = append(res, x)
 		})
@@ -124,10 +123,10 @@ func TestFromChan(t *testing.T) {
 
 func TestFromObservable(t *testing.T) {
 	res := []int{}
-	ob := rxgo.From([]int{10, 20, 30}).Map(func(x int) int {
+	ob := From([]int{10, 20, 30}).Map(func(x int) int {
 		return x + 1
 	})
-	rxgo.From(ob).Subscribe(
+	From(ob).Subscribe(
 		func(x int) {
 			res = append(res, x)
 		})
@@ -136,8 +135,8 @@ func TestFromObservable(t *testing.T) {
 
 func TestThrow(t *testing.T) {
 	var ee error
-	rxgo.Throw(rxgo.ErrEoFlow).Subscribe(
-		rxgo.ObserverMonitor{
+	Throw(ErrEoFlow).Subscribe(
+		ObserverMonitor{
 			Next: func(x interface{}) {
 				t.Errorf("No data expected! but %v", x)
 			},
@@ -154,7 +153,7 @@ func TestThrow(t *testing.T) {
 
 func TestEmpty(t *testing.T) {
 	var b bool
-	rxgo.Empty().Subscribe(
+	Empty().Subscribe(
 		func(x interface{}) {
 			b = true
 		})
@@ -163,7 +162,7 @@ func TestEmpty(t *testing.T) {
 
 func TestNeverWithCancel(t *testing.T) {
 
-	var oberver = rxgo.ObserverMonitor{
+	var oberver = ObserverMonitor{
 		Next: func(x interface{}) {
 			t.Errorf("Ragne Test expect %v ", "Nothng")
 		},
@@ -183,6 +182,5 @@ func TestNeverWithCancel(t *testing.T) {
 			oberver.Unsubscribe()
 		}()
 	}
-
-	rxgo.Never().Subscribe(oberver)
+	Never().Subscribe(oberver)
 }

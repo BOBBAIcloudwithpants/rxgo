@@ -1,11 +1,10 @@
-package rxgo_test
+package rxgo
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/pmlpml/rxgo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +14,7 @@ func TestAnyTranform(t *testing.T) {
 	eCount := 0
 	res := []int{}
 
-	rxgo.Generator(func(ctx context.Context, send func(x interface{}) (endSignal bool)) {
+	Generator(func(ctx context.Context, send func(x interface{}) (endSignal bool)) {
 		send(10)
 		send("hello")
 		send(20)
@@ -27,7 +26,7 @@ func TestAnyTranform(t *testing.T) {
 		} else {
 			send(item)
 		}
-	}).Subscribe(rxgo.ObserverMonitor{
+	}).Subscribe(ObserverMonitor{
 		Next: func(item interface{}) {
 			if i, ok := item.(int); ok {
 				iCount++
@@ -47,7 +46,7 @@ func TestAnyTranform(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	res := []int{}
-	ob := rxgo.Just(10, 20, 30).Map(func(x int) int {
+	ob := Just(10, 20, 30).Map(func(x int) int {
 		return 2 * x
 	})
 	ob.Subscribe(func(x int) {
@@ -58,13 +57,13 @@ func TestMap(t *testing.T) {
 
 	res1 := []interface{}{}
 	ee := errors.New("Any")
-	rxgo.Generator(func(ctx context.Context, send func(x interface{}) (endSignal bool)) {
+	Generator(func(ctx context.Context, send func(x interface{}) (endSignal bool)) {
 		send(10)
 		send(ee)
 		send(30)
 	}).Map(func(x int) int {
 		return 2 * x
-	}).Subscribe(rxgo.ObserverMonitor{
+	}).Subscribe(ObserverMonitor{
 		Next: func(item interface{}) {
 			res1 = append(res1, item)
 		},
@@ -78,8 +77,8 @@ func TestMap(t *testing.T) {
 
 func TestFlatMap(t *testing.T) {
 	res := []int{}
-	rxgo.Just(10, 20, 30).FlatMap(func(x int) *rxgo.Observable {
-		return rxgo.Just(x+1, x+2)
+	Just(10, 20, 30).FlatMap(func(x int) *Observable {
+		return Just(x+1, x+2)
 	}).Subscribe(func(x int) {
 		res = append(res, x)
 	})
@@ -89,7 +88,7 @@ func TestFlatMap(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 	res := []int{}
-	rxgo.Just(0, 12, 7, 34, 2).Filter(func(x int) bool {
+	Just(0, 12, 7, 34, 2).Filter(func(x int) bool {
 		return x < 10
 	}).Subscribe(func(x int) {
 		res = append(res, x)

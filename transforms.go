@@ -28,11 +28,13 @@ func (tsop transOperater) op(ctx context.Context, o *Observable) {
 	// this resurces may be changed when operation routine is running.
 	in := o.pred.outflow
 	out := o.outflow
+
 	//fmt.Println(o.name, "operator in/out chan ", in, out)
 	var wg sync.WaitGroup
 
 	go func() {
 		end := false
+
 		for x := range in {
 			if end {
 				continue
@@ -50,6 +52,7 @@ func (tsop transOperater) op(ctx context.Context, o *Observable) {
 				if tsop.opFunc(ctx, o, xv, out) {
 					end = true
 				}
+
 			case ThreadingIO:
 				fallthrough
 			case ThreadingComputing:
@@ -248,6 +251,7 @@ var filterOperater = transOperater{func(ctx context.Context, o *Observable, x re
 	return
 }}
 
+
 func (parent *Observable) newTransformObservable(name string) (o *Observable) {
 	//new Observable
 	o = newObservable()
@@ -262,3 +266,4 @@ func (parent *Observable) newTransformObservable(name string) (o *Observable) {
 	o.buf_len = BufferLen
 	return o
 }
+

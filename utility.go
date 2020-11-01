@@ -31,9 +31,12 @@ func (o InnerObserver) OnCompleted() {
 // func type check, such as `func(x int) bool` satisfied for `func(x anytype) bool`
 func checkFuncUpcast(fv reflect.Value, inType, outType []reflect.Type, ctx_sup bool) (b, ctx_b bool) {
 	//fmt.Println(fv.Kind(),reflect.Func)
+	// 首先判断是否是函数
 	if fv.Kind() != reflect.Func {
 		return // Not func
 	}
+
+	//
 	ft := fv.Type()
 	if ft.NumOut() != len(outType) {
 		return // Error result parameters
@@ -43,13 +46,17 @@ func checkFuncUpcast(fv reflect.Value, inType, outType []reflect.Type, ctx_sup b
 			return
 		}
 	} else {
+		// 函数的参数数量与 inType 的数量不一致
 		if ft.NumIn() == 0 {
 			if len(inType) != 0 {
 				return
 			}
 		} else {
+			// 第一个参数实现了上下文
 			if ft.In(0).Implements(typeContext) {
 				ctx_b = true
+
+				// 参数数量此时必须等于 inType 的个数+1
 				if ft.NumIn() != len(inType)+1 {
 					return
 				}
@@ -68,6 +75,7 @@ func checkFuncUpcast(fv reflect.Value, inType, outType []reflect.Type, ctx_sup b
 		} else {
 			real_t = ft.In(i)
 		}
+
 
 		//todo: ptr or slice check
 		switch {
@@ -141,4 +149,44 @@ func userFuncCall(fv reflect.Value, params []reflect.Value) (res []reflect.Value
 
 	res = fv.Call(params)
 	return
+}
+
+func isInBuf(buf []interface{}, val reflect.Value) bool {
+
+	for _, value := range buf {
+		value = reflect.ValueOf(value).Interface()
+		if value == val.Interface() {
+			return true
+		}
+	}
+	return false
+}
+
+// partion the input stream by giving condition
+// isTake ---- true, indicates that it is take mode
+// isTake ---- false,  indicates that it is skip mode
+func partionFlow(isTake bool, division int, in []interface{}) ([]interface{}, error) {
+	// get the first few
+	fmt.Println(in)
+	if (isTake && division > 0) || (!isTake && division < 0) {
+		if !isTake {
+			division = len(in) + division
+		}
+		if division >= len(in) || division <= 0{
+			return nil, OutOfBounds
+		}
+		return in[:division], nil
+	}
+
+	// get the first few
+	if (isTake && division < 0) || (!isTake && division > 0) {
+		if isTake {
+			division = len(in) + division
+		}
+		if division >= len(in) || division <= 0{
+			return nil, OutOfBounds
+		}
+		return in[division:], nil
+	}
+	return nil, OutOfBounds
 }

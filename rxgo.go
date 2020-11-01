@@ -10,6 +10,7 @@ import (
 	"errors"
 	"reflect"
 	"sync"
+	"time"
 )
 
 type ThreadModel uint
@@ -138,6 +139,39 @@ type Observable struct {
 	debug             Observer
 	flip_sup_ctx      bool //indicate that flip function use context as first paramter
 	flip_accept_error bool // indicate that flip function input's data is type interface{} or error
+
+
+	// indicate whether pick only the first input flow from parent, commonly set to true in 'First' Observer
+	only_first		  bool
+
+	// indicate whether pick only the first input flow from parent, commonly set to true in 'Last' Observer
+	only_last		  bool
+
+	// indicate after how many seconds without emitting can a value be admitted, commonly used in 'Debounce' Observer
+	debounce_timespan time.Duration
+
+	// indicate whether this Observable only emits distinct value
+	only_distinct	  bool
+
+	// indicate the sample interval of input flow, commonly used in 'Sample' Filter
+	sample_interval   time.Duration
+
+	// indicate the element index in elementAt, commonly used in 'ElementAt' Filter
+	element_at		  int
+
+	// indicate first/last (n) item to be skipped, commonly used in 'Skip' Filter
+	// if skip is positive, then it means skipping first few items; if skip is negative, then it means skipping last few items
+	skip			  int
+
+	// indicate first/last (n) item to be taken, commonly used in 'Skip' Filter
+	// if take is positive, then it means taking first few items; if take is negative, then it means taking last few items
+	take			  int
+
+	// indicate whether the Operator is 'Take' or 'TakeLast'
+	is_taking		  bool
+
+
+
 }
 
 func newObservable() *Observable {
@@ -148,8 +182,8 @@ func newObservable() *Observable {
 func (o *Observable) connect(ctx context.Context) {
 	for po := o.root; po != nil; po = po.next {
 		po.outflow = make(chan interface{}, po.buf_len)
+		//fmt.Println("conneted", po.Name, po.outflow)
 		po.operator.op(ctx, po)
-		//fmt.Println("conneted", po.name, po.outflow)
 	}
 }
 
@@ -193,16 +227,18 @@ func (o *Observable) Subscribe(ob interface{}) {
 		//fmt.Println("ctx geted!", ctx)
 	}
 
-	//fmt.Println("begin conneted", o.name)
+	//fmt.Println("begin conneted", o.Name)
 	o.connect(ctx)
 	if ctxok {
 		oc.OnConnected()
 	}
 
-	//get the last ob servable
+	//get the last observable
 	po := o
 	for ; po.next != nil; po = po.next {
 	}
+
+	//fmt.Println("get the last observable: ", po.Name)
 
 	in := po.outflow
 	o.mu.Unlock()
@@ -219,6 +255,8 @@ func (o *Observable) Subscribe(ob interface{}) {
 			if _, ok := x.(error); ok {
 				// skip error
 			} else {
+
+				// 函数调用
 				params := []reflect.Value{reflect.ValueOf(x)}
 				fv.Call(params)
 			}
