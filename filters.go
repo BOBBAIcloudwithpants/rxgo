@@ -96,12 +96,20 @@ func (tsop filterOperator) op(ctx context.Context, o *Observable) {
 			is_appear[xv.Interface()] = true
 			o.mu.Unlock()
 
+			if interval > time.Duration(0){
+				// save the last item, if it exists
+				if len(out_buf) > 2 {
+					xv = reflect.ValueOf(out_buf[len(out_buf) - 2])
+				}
+			}
+
 			// scheduler
 			switch threading := o.threading; threading {
 			case ThreadingDefault:
 				if o.sample_interval > 0 {
 					sample_start = sample_start.Add(o.sample_interval)
 				}
+
 				if tsop.opFunc(ctx, o, xv, out) {
 					end = true
 				}
@@ -113,6 +121,7 @@ func (tsop filterOperator) op(ctx context.Context, o *Observable) {
 				if o.sample_interval > 0 {
 					sample_start.Add(o.sample_interval)
 				}
+
 				go func() {
 					defer wg.Done()
 					if tsop.opFunc(ctx, o, xv, out) {
@@ -291,7 +300,7 @@ var distinctOperator = filterOperator{opFunc: func(ctx context.Context, o *Obser
 	return
 },
 }
-
+// Take emit only the first n items emitted by an Observable
 func (parent *Observable) Take(num int) (o *Observable) {
 
 	o = parent.newFilterObservable("Take")
@@ -317,7 +326,7 @@ var takeOperator = filterOperator{opFunc: func(ctx context.Context, o *Observabl
 },
 }
 
-
+// TakeLast emit only the last n items emitted by an Observable
 func (parent *Observable) TakeLast(num int) (o *Observable) {
 	o = parent.newFilterObservable("takeLast")
 	o.only_first, o.only_last, o.only_distinct = false, false, false
@@ -326,7 +335,6 @@ func (parent *Observable) TakeLast(num int) (o *Observable) {
 	o.take = -num
 	o.is_taking = true
 	o.operator = takeLastOperator
-
 	return o
 }
 

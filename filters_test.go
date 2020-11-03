@@ -1,10 +1,11 @@
 package rxgo
 
 import (
-	rxgo "github.com/bobbaicloudwithpants/rxgo"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	rxgo "github.com/bobbaicloudwithpants/rxgo"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFirst(t *testing.T) {
@@ -18,7 +19,6 @@ func TestFirst(t *testing.T) {
 
 	assert.Equal(t, []int{20}, res, "First Test Error!")
 }
-
 
 func TestLast(t *testing.T) {
 	res := []int{}
@@ -35,8 +35,9 @@ func TestLast(t *testing.T) {
 func TestDebounce(t *testing.T) {
 	res := []int{}
 	ob := rxgo.Just(10, 20, 30, 40).Map(func(x int) int {
+		time.Sleep(20 * time.Millisecond)
 		return 2 * x
-	}).Debounce(100000000)
+	}).Debounce(30 * time.Millisecond)
 	ob.Subscribe(func(x int) {
 		res = append(res, x)
 	})
@@ -107,17 +108,17 @@ func TestElementAt(t *testing.T) {
 	ob.Subscribe(func(x int) {
 		res = append(res, x)
 	})
-	assert.Equal(t, []int{80}, res, "SkipLast Test Error!")
+	assert.Equal(t, []int{80}, res, "ElementAt Test Error!")
 }
 
 func TestSample(t *testing.T) {
 	res := []int{}
-	rxgo.Just(1,2,3,4, 3, 1 ,2 ,4 ,3).Map(func(x int) int {
-		time.Sleep(2 * time.Millisecond)
-		return 2*x
-	}).Sample(5 * time.Millisecond).Subscribe(func(x int) {
+	rxgo.Just(1, 2, 3, 4, 3, 1, 2, 4, 3).Map(func(x int) int {
+		time.Sleep(20 * time.Millisecond)
+		return 2 * x
+	}).Sample(15 * time.Millisecond).Subscribe(func(x int) {
 		res = append(res, x)
 	})
-	assert.Equal(t, []int{6, 6, 4, 6}, res, "SkipLast Test Error!")
+	assert.Equal(t, []int{2, 4, 6, 8, 6, 2, 4, 8, 6}, res, "Sample Test Error!")
 
 }
