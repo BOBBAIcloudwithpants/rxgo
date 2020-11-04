@@ -120,5 +120,4 @@ func TestSample(t *testing.T) {
 		res = append(res, x)
 	})
 	assert.Equal(t, []int{2, 4, 6, 8, 6, 2, 4, 8, 6}, res, "Sample Test Error!")
-
 }

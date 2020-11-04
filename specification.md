@@ -443,7 +443,221 @@ func (parent *Observable) TakeLast(num int) (o *Observable)
   
 | name       | only_first | only_last | debounce_timespan | only_distinct | sample_interval | element_at | skip | take | is_taking |
 | ---------- | ---------- | --------- | ----------------- | ------------- | --------------- | ---------- | ---- | ---- | --------- |
-| "takeLast" | false      | false     | 0                 | false         | 0               | 0          | 0    | num  | false     |
+| "takeLast" | false      | false     | 0                 | false         | 0               | 0          | 0    | -num | false     |
+
+- 实现细节      
+因为TakeLast的功能是选取输入流中的后几个，因此与 Take 的实现类似，将全部的输入流缓存之后根据需求选取后几个对象传入输出流即可，这里不再详细介绍。
+
+- 测试设计      
+```go
+func TestTakeLast(t *testing.T) {
+	res := []int{}
+	ob := rxgo.Just(10, 20, 30, 40, 20, 10, 50).Map(func(x int) int {
+		return 2 * x
+	}).TakeLast(4)
+	ob.Subscribe(func(x int) {
+		res = append(res, x)
+	})
+	assert.Equal(t, []int{80, 40, 20, 100}, res, "TakeLast Test Error!")
+}
+```
+
+### **7. Skip**
+
+- 定义    
+Skip suppress the first n items emitted by an Observable
+
+- 示意图       
+![](https://tva1.sinaimg.cn/large/0081Kckwgy1gkctyst8n2j315c0fywgc.jpg)
+
+- 函数定义     
+```go
+// Skip suppress the first n items emitted by an Observable
+func (parent *Observable) Skip(num int) (o *Observable) 
+```
+
+- 实现细节
+
+可以从示意图看到，Skip功能与TakeLast相似，Skip会从前向后跳过给定的对象个数，因此可以复用TakeLast的实现，这里也不再详细介绍。      
+
+
+- 测试设计       
+```go
+func TestSkip(t *testing.T) {
+	res := []int{}
+	ob := rxgo.Just(10, 20, 30, 40, 20, 10, 50).Map(func(x int) int {
+		return 2 * x
+	}).Skip(4)
+	ob.Subscribe(func(x int) {
+		res = append(res, x)
+	})
+	assert.Equal(t, []int{40, 20, 100}, res, "Skip Test Error!")
+}
+```
+
+
+**8. SkipLast**
+
+- 定义      
+SkipLast suppress the last n items emitted by an Observable
+
+- 示意图    
+![](https://tva1.sinaimg.cn/large/0081Kckwgy1gkcu8vl7jqj315a0fw0un.jpg)
+
+
+
+- 函数定义    
+```go
+// SkipLast suppress the last n items emitted by an Observable
+func (parent *Observable) SkipLast(num int) (o *Observable)
+```
+
+- Operator 属性设置   
+  
+| name       | only_first | only_last | debounce_timespan | only_distinct | sample_interval | element_at | skip | take | is_taking |
+| ---------- | ---------- | --------- | ----------------- | ------------- | --------------- | ---------- | ---- | ---- | --------- |
+| "skipLast" | false      | false     | 0                 | false         | 0               | 0          | -num |      | false     |
+
+- 实现细节     
+可以从示意图看到，SkipLast将输入流缓之后删除后几个元素并传入输出流，与Tak的实现很类似，所以这里也不再详细介绍。 
+
+
+- 测试设计      
+```go
+func TestSkipLast(t *testing.T) {
+	res := []int{}
+	ob := rxgo.Just(10, 20, 30, 40, 20, 10, 50).Map(func(x int) int {
+		return 2 * x
+	}).SkipLast(4)
+	ob.Subscribe(func(x int) {
+		res = append(res, x)
+	})
+	assert.Equal(t, []int{20, 40, 60}, res, "SkipLast Test Error!")
+}
+```
+
+
+### 9. ElementAt
+
+- 定义     
+ElementAt emit only item n emitted by an Observable
+
+- 示意图
+![](https://tva1.sinaimg.cn/large/0081Kckwgy1gkcujbw4qoj315k0fgabt.jpg)
+
+
+- 函数定义     
+```go
+// ElementAt emit only item n emitted by an Observable
+func (parent *Observable) ElementAt(num int) (o *Observable)
+```
+- Operator 属性设置      
+
+| name       | only_first | only_last | debounce_timespan | only_distinct | sample_interval | element_at | skip | take | is_taking |
+| ---------- | ---------- | --------- | ----------------- | ------------- | --------------- | ---------- | ---- | ---- | --------- |
+| "skipLast" | false      | false     | 0                 | false         | 0               | 0          | -num |      | false     |
+
+- 函数实现      
+ElementAt 的功能类似于数组根据索引寻找特定元素的过程，因此在将输入流缓存在 `out_buf` 后，根据用户传入的索引找到元素传到输出流后即可，如下:     
+
+```go
+
+// ElementAt operator
+		if o.element_at != 0 {
+			if o.element_at < 0 || o.element_at > len(out_buf) {
+				o.sendToFlow(ctx, ElementOutOfBounds, out)
+			} else {
+				xv := reflect.ValueOf(out_buf[o.element_at-1])
+				tsop.opFunc(ctx, o, xv, out)
+			}
+		}
+
+```
+
+
+- 测试设计     
+```go
+func TestElementAt(t *testing.T) {
+	res := []int{}
+	ob := rxgo.Just(10, 20, 30, 40, 20, 10, 50).Map(func(x int) int {
+		return 2 * x
+	}).ElementAt(4)
+	ob.Subscribe(func(x int) {
+		res = append(res, x)
+	})
+	assert.Equal(t, []int{80}, res, "ElementAt Test Error!")
+}
+```
+
+
+### 10. Sample
+
+- 定义      
+Sample emit the most recent item emitted by an Observable within periodic time intervals.      
+
+- 示意图     
+![](https://tva1.sinaimg.cn/large/0081Kckwgy1gkcv63r5cij31640g440m.jpg)      
+
+- 函数定义     
+```go
+// Sample emit the most recent item emitted by an Observable within periodic time intervals. 
+func (parent *Observable) Sample(st time.Duration) (o *Observable) 
+```
+
+- Operator 属性设置        
+
+| name     | only_first | only_last | debounce_timespan | only_distinct | sample_interval | element_at | skip | take | is_taking |
+| -------- | ---------- | --------- | ----------------- | ------------- | --------------- | ---------- | ---- | ---- | --------- |
+| "Sample" | false      | false     | 0                 | false         | st              | 0          | 0    | 0    | false     |
+
+- 函数实现细节     
+
+Sample 接受一个用户自定义的取样周期，见每个去扬州起的接受到的第一个元素传入输出流。因此在实现的时候，需要判断输入的对象属于哪个周期，如果是这个周期的第一个元素则传入输出流，并且要更新周期；如果不是则忽略这个对象，实现如下：
+```go
+for x:= range in {
+  ...
+  			// Not satisfy the sample period
+			if o.sample_interval > 0 && st < o.sample_interval {
+				continue
+      }
+  
+  ...
+  if o.sample_interval > 0 {
+					sample_start = sample_start.Add(o.sample_interval)
+				}
+				
+
+}
+```
+
+
+- 测试设计      
+```go
+func TestSample(t *testing.T) {
+	res := []int{}
+	rxgo.Just(1, 2, 3, 4, 3, 1, 2, 4, 3).Map(func(x int) int {
+		time.Sleep(20 * time.Millisecond)
+		return 2 * x
+	}).Sample(15 * time.Millisecond).Subscribe(func(x int) {
+		res = append(res, x)
+	})
+	assert.Equal(t, []int{2, 4, 6, 8, 6, 2, 4, 8, 6}, res, "Sample Test Error!")
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

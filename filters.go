@@ -350,6 +350,7 @@ var takeLastOperator = filterOperator{opFunc: func(ctx context.Context, o *Obser
 },
 }
 
+// Skip suppress the first n items emitted by an Observable
 func (parent *Observable) Skip(num int) (o *Observable) {
 	o = parent.newFilterObservable("skip")
 	o.only_first, o.only_last, o.only_distinct = false, false, false
@@ -374,7 +375,7 @@ var skipOperator = filterOperator{opFunc: func(ctx context.Context, o *Observabl
 },
 }
 
-
+// SkipLast suppress the last n items emitted by an Observable
 func (parent *Observable) SkipLast(num int) (o *Observable) {
 	o = parent.newFilterObservable("skipLast")
 	o.only_first, o.only_last, o.only_distinct = false, false, false
@@ -399,6 +400,7 @@ var skipLastOperator = filterOperator{opFunc: func(ctx context.Context, o *Obser
 },
 }
 
+// ElementAt emit only item n emitted by an Observable
 func (parent *Observable) ElementAt(num int) (o *Observable) {
 
 	o = parent.newFilterObservable("elementAt")
@@ -425,6 +427,7 @@ var elementAtOperator = filterOperator{opFunc: func(ctx context.Context, o *Obse
 },
 }
 
+// Sample emit the most recent item emitted by an Observable within periodic time intervals.
 func (parent *Observable) Sample(st time.Duration) (o *Observable) {
 	o = parent.newFilterObservable("sample")
 	o.only_first, o.only_last, o.only_distinct = false, false, false
