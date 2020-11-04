@@ -41,7 +41,7 @@
 ├── specification.md
 ├── transform_test.go
 ├── transforms.go
-└── utility.go              // 改动文件，增加了
+└── utility.go              // 改动文件，增加了一些功能性的函数
 ```
 
 ## 设计思路
