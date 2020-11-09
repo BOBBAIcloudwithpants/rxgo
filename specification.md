@@ -645,7 +645,13 @@ func TestSample(t *testing.T) {
 }
 ```
 
-
+### 测试结果
+输入:    
+```
+go test -v filters_test.go
+```
+可得:    
+![](https://tva1.sinaimg.cn/large/0081Kckwgy1gkinlmgshkj30v20l6q68.jpg)
 
 
 
